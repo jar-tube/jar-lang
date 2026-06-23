@@ -210,6 +210,9 @@ class Interpreter:
         right = self.execute(node.right)
         
         if node.operator == TokenType.PLUS:
+            # Handle string concatenation - convert to string if either operand is a string
+            if isinstance(left, str) or isinstance(right, str):
+                return self._to_string(left) + self._to_string(right)
             return left + right
         elif node.operator == TokenType.MINUS:
             return left - right
@@ -297,6 +300,27 @@ class Interpreter:
                 self.pop_scope()
         
         raise TypeError(f"'{callee}' is not callable")
+    
+    @staticmethod
+    def _to_string(value: Any) -> str:
+        """Convert a value to a string for concatenation."""
+        if isinstance(value, str):
+            return value
+        elif value is None:
+            return "null"
+        elif isinstance(value, bool):
+            return "true" if value else "false"
+        elif isinstance(value, (int, float)):
+            # Format numbers nicely (remove .0 for integers)
+            if isinstance(value, float) and value.is_integer():
+                return str(int(value))
+            return str(value)
+        elif isinstance(value, list):
+            return str(value)
+        elif isinstance(value, dict):
+            return str(value)
+        else:
+            return str(value)
     
     @staticmethod
     def is_truthy(value: Any) -> bool:

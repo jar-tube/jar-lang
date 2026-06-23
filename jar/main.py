@@ -2,7 +2,10 @@
 """Entry point for the JAR interpreter."""
 
 import sys
-from pathlib import Path
+import os
+
+# Add parent directory to path to allow imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from jar.lexer import Lexer
 from jar.parser import Parser
@@ -43,7 +46,7 @@ def run_source(source):
 def main():
     """Main entry point."""
     if len(sys.argv) < 2:
-        print("Usage: python -m jar.main <script.jar>")
+        print("Usage: python jar/main.py <script.jar>")
         sys.exit(1)
     
     script_path = sys.argv[1]

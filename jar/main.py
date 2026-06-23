@@ -3,7 +3,6 @@
 
 import sys
 import os
-from pathlib import Path
 
 # Add parent directory to path to allow imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,50 +10,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from jar.lexer import Lexer
 from jar.parser import Parser
 from jar.interpreter import Interpreter
-
-
-def list_jar_files(directory):
-    """List all .jar files in a directory."""
-    try:
-        jar_files = list(Path(directory).glob("*.jar"))
-        if jar_files:
-            return [f.name for f in jar_files]
-    except Exception:
-        pass
-    return []
-
-
-def run_file(filename):
-    """Run a JAR script from a file."""
-    file_path = Path(filename)
-    
-    try:
-        with open(file_path, 'r') as f:
-            source = f.read()
-    except FileNotFoundError:
-        cwd = os.getcwd()
-        print(f"\n❌ Error: File '{filename}' not found.")
-        print(f"\n📍 Current working directory:\n   {cwd}")
-        
-        # List available .jar files
-        jar_files = list_jar_files(cwd)
-        if jar_files:
-            print(f"\n📂 Available .jar files in current directory:")
-            for jar_file in jar_files:
-                print(f"   - {jar_file}")
-        else:
-            print(f"\n📂 No .jar files found in current directory")
-        
-        # Suggest the correct command
-        print(f"\n💡 Tip: Make sure the file exists and use the correct path:")
-        print(f"   python jar/main.py ./path/to/{os.path.basename(filename)}")
-        print()
-        sys.exit(1)
-    except IOError as e:
-        print(f"❌ Error reading file: {e}")
-        sys.exit(1)
-
-    run_source(source, filename)
 
 
 def run_source(source, filename="<input>"):
@@ -69,38 +24,102 @@ def run_source(source, filename="<input>"):
         interpreter = Interpreter()
         interpreter.execute(ast)
     except SyntaxError as e:
-        print(f"\n❌ Syntax Error in {filename}:")
-        print(f"   {e}\n", file=sys.stderr)
-        sys.exit(1)
+        print(f"Syntax Error: {e}")
     except Exception as e:
-        print(f"\n❌ Runtime Error in {filename}:")
-        print(f"   {e}\n", file=sys.stderr)
+        print(f"Error: {e}")
+
+
+def run_interactive():
+    """Run interactive REPL mode."""
+    print("🚀 JAR Interactive Interpreter")
+    print("Type 'exit' to quit, 'help' for commands\n")
+    
+    interpreter = Interpreter()
+    
+    while True:
+        try:
+            # Read input
+            user_input = input("jar> ").strip()
+            
+            # Handle special commands
+            if not user_input:
+                continue
+            
+            if user_input.lower() == "exit":
+                print("Goodbye!")
+                break
+            
+            if user_input.lower() == "help":
+                print("""
+Available commands:
+  exit          - Exit the interpreter
+  help          - Show this help message
+  
+Examples:
+  let x = 10;
+  print(x + 5);
+  fn add(a, b) { return a + b; }
+  print(add(3, 4));
+""")
+                continue
+            
+            # Parse and execute
+            try:
+                lexer = Lexer(user_input)
+                tokens = lexer.tokenize()
+                
+                parser = Parser(tokens)
+                ast = parser.parse()
+                
+                # Execute each statement
+                for stmt in ast.statements:
+                    result = interpreter.execute(stmt)
+                    # Print non-None results
+                    if result is not None and not isinstance(result, type(None)):
+                        # Format output nicely
+                        if isinstance(result, bool):
+                            print(result)
+                        elif isinstance(result, float) and result.is_integer():
+                            print(int(result))
+                        else:
+                            print(result)
+            except SyntaxError as e:
+                print(f"Syntax Error: {e}")
+            except Exception as e:
+                print(f"Error: {e}")
+        
+        except KeyboardInterrupt:
+            print("\n\nGoodbye!")
+            break
+        except EOFError:
+            print("\n\nGoodbye!")
+            break
+
+
+def run_file(filename):
+    """Run a JAR script from a file."""
+    try:
+        with open(filename, 'r') as f:
+            source = f.read()
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
         sys.exit(1)
+    except IOError as e:
+        print(f"Error reading file: {e}")
+        sys.exit(1)
+
+    run_source(source, filename)
 
 
 def main():
     """Main entry point."""
     if len(sys.argv) < 2:
-        cwd = os.getcwd()
-        print("🚀 JAR Programming Language Interpreter")
-        print(f"\nUsage: python jar/main.py <script.jar>")
-        print(f"\nCurrent working directory: {cwd}")
-        
-        # List available .jar files
-        jar_files = list_jar_files(cwd)
-        if jar_files:
-            print(f"\nAvailable .jar files:")
-            for jar_file in jar_files:
-                print(f"  - {jar_file}")
-        
-        print(f"\nExamples:")
-        print(f"  python jar/main.py examples/hello.jar")
-        print(f"  python jar/main.py ./my-script.jar")
-        print()
-        sys.exit(1)
-    
-    script_path = sys.argv[1]
-    run_file(script_path)
+        # No arguments - start interactive mode
+        run_interactive()
+    else:
+        # File argument provided
+        script_path = sys.argv[1]
+        run_file(script_path)
 
 
 if __name__ == '__main__':

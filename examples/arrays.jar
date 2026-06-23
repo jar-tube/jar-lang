@@ -1,0 +1,9 @@
+// Arrays and objects in JAR
+let arr = [1, 2, 3, 4, 5];
+print("Array: " + arr);
+print("Length: " + len(arr));
+print("First element: " + arr[0]);
+
+let obj = {"name": "Alice", "age": 30, "city": "NYC"};
+print("Object: " + obj);
+print("Name: " + obj["name"]);

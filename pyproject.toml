@@ -1,0 +1,12 @@
+[project]
+name = "jar-lang"
+version = "0.1.0"
+description = "A simple programming language with a Python-based interpreter"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
